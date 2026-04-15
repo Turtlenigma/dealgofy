@@ -2,12 +2,21 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Required to read guarded-app usage for Panel 2 leaderboard -->
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions"/>
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
+    <!-- Required to fire focus-mode end notification -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+    <!-- Required for focus-mode DND -->
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY"/>
+    <!-- Required for focus-mode brightness control -->
+    <uses-permission android:name="android.permission.WRITE_SETTINGS"
+        tools:ignore="ProtectedPermissions"/>
+    <!-- Required on API 31+ to call setExactAndAllowWhileIdle for focus-mode alarm -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <!-- Required on API 30+ to enumerate installed apps in the app picker -->
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission"/>
 
     <application
         android:allowBackup="true"
@@ -29,19 +38,32 @@
             </intent-filter>
         </activity>
 
+        <!-- Shown over lock screen so the intercept appears immediately -->
         <activity
             android:name=".InterceptActivity"
             android:exported="false"
             android:showOnLockScreen="true"
             android:turnScreenOn="true" />
 
+        <receiver
+            android:name=".FocusEndReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.turtlenigma.dealgofy.FOCUS_END" />
+            </intent-filter>
+        </receiver>
+
         <service
-            android:name=".AppMonitorService"
-            android:exported="false"
-            android:foregroundServiceType="specialUse">
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="monitorForegroundApp"/>
+            android:name=".DeAlgofyAccessibilityService"
+            android:exported="true"
+            android:label="@string/accessibility_service_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
         </service>
 
     </application>

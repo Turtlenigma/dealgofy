@@ -1,57 +1,279 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:gravity="center"
-    android:padding="32dp"
-    android:background="#0d0d0d">
+    android:background="#0d0d0d"
+    android:fillViewport="true">
 
-    <TextView
-        android:id="@+id/tvBalance"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="⬡ 5.0 coins remaining"
-        android:textColor="#c8f542"
-        android:textSize="32sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="16dp"/>
+        android:orientation="vertical"
+        android:padding="20dp">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="DeAlgofy"
-        android:textColor="#e8e8e8"
-        android:textSize="14sp"
-        android:letterSpacing="0.2"
-        android:layout_marginBottom="64dp"/>
+        <!-- ── Header ──────────────────────────────────────────────────── -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="DeAlgofy"
+            android:textColor="#c8f542"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="2dp"/>
 
-    <Button
-        android:id="@+id/btnRequestPermission"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:text="Grant Usage Access"
-        android:backgroundTint="#1c1c1c"
-        android:textColor="#999999"
-        android:layout_marginBottom="12dp"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="configuration"
+            android:textColor="#555555"
+            android:textSize="13sp"
+            android:letterSpacing="0.1"
+            android:layout_marginBottom="32dp"/>
 
-    <Button
-        android:id="@+id/btnRequestOverlay"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:text="Grant Overlay Permission"
-        android:backgroundTint="#1c1c1c"
-        android:textColor="#999999"
-        android:layout_marginBottom="12dp"/>
+        <!-- ── PERMISSIONS ─────────────────────────────────────────────── -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="PERMISSIONS"
+            android:textColor="#555555"
+            android:textSize="11sp"
+            android:letterSpacing="0.15"
+            android:layout_marginBottom="8dp"/>
 
-    <Button
-        android:id="@+id/btnStartService"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:text="Start DeAlgofy"
-        android:backgroundTint="#c8f542"
-        android:textColor="#000000"
-        android:textStyle="bold"/>
+        <!-- Accessibility Service -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:orientation="horizontal"
+            android:background="#1c1c1c"
+            android:paddingStart="16dp"
+            android:paddingEnd="4dp"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="4dp">
+            <View
+                android:id="@+id/dotAccessibility"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:background="@drawable/circle_dot"
+                android:layout_marginEnd="14dp"/>
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Accessibility Service"
+                android:textColor="#e8e8e8"
+                android:textSize="14sp"/>
+            <Button
+                android:id="@+id/btnGrantAccessibility"
+                style="@style/Widget.AppCompat.Button.Borderless"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:text="Grant"
+                android:textColor="#c8f542"
+                android:textSize="12sp"
+                android:paddingHorizontal="8dp"/>
+        </LinearLayout>
 
-</LinearLayout>
+        <!-- Usage Stats -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:orientation="horizontal"
+            android:background="#1c1c1c"
+            android:paddingStart="16dp"
+            android:paddingEnd="4dp"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="4dp">
+            <View
+                android:id="@+id/dotUsage"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:background="@drawable/circle_dot"
+                android:layout_marginEnd="14dp"/>
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Usage Stats"
+                android:textColor="#e8e8e8"
+                android:textSize="14sp"/>
+            <Button
+                android:id="@+id/btnGrantUsage"
+                style="@style/Widget.AppCompat.Button.Borderless"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:text="Grant"
+                android:textColor="#c8f542"
+                android:textSize="12sp"
+                android:paddingHorizontal="8dp"/>
+        </LinearLayout>
+
+        <!-- Do Not Disturb -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:orientation="horizontal"
+            android:background="#1c1c1c"
+            android:paddingStart="16dp"
+            android:paddingEnd="4dp"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="4dp">
+            <View
+                android:id="@+id/dotDnd"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:background="@drawable/circle_dot"
+                android:layout_marginEnd="14dp"/>
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Do Not Disturb"
+                android:textColor="#e8e8e8"
+                android:textSize="14sp"/>
+            <Button
+                android:id="@+id/btnGrantDnd"
+                style="@style/Widget.AppCompat.Button.Borderless"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:text="Grant"
+                android:textColor="#c8f542"
+                android:textSize="12sp"
+                android:paddingHorizontal="8dp"/>
+        </LinearLayout>
+
+        <!-- Write Settings -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:orientation="horizontal"
+            android:background="#1c1c1c"
+            android:paddingStart="16dp"
+            android:paddingEnd="4dp"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="4dp">
+            <View
+                android:id="@+id/dotWriteSettings"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:background="@drawable/circle_dot"
+                android:layout_marginEnd="14dp"/>
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Modify System Settings"
+                android:textColor="#e8e8e8"
+                android:textSize="14sp"/>
+            <Button
+                android:id="@+id/btnGrantWriteSettings"
+                style="@style/Widget.AppCompat.Button.Borderless"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:text="Grant"
+                android:textColor="#c8f542"
+                android:textSize="12sp"
+                android:paddingHorizontal="8dp"/>
+        </LinearLayout>
+
+        <!-- Exact Alarm (API 31+, hidden programmatically on older devices) -->
+        <LinearLayout
+            android:id="@+id/cardAlarm"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:orientation="horizontal"
+            android:background="#1c1c1c"
+            android:paddingStart="16dp"
+            android:paddingEnd="4dp"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="4dp">
+            <View
+                android:id="@+id/dotAlarm"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:background="@drawable/circle_dot"
+                android:layout_marginEnd="14dp"/>
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Schedule Exact Alarm"
+                android:textColor="#e8e8e8"
+                android:textSize="14sp"/>
+            <Button
+                android:id="@+id/btnGrantAlarm"
+                style="@style/Widget.AppCompat.Button.Borderless"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:text="Grant"
+                android:textColor="#c8f542"
+                android:textSize="12sp"
+                android:paddingHorizontal="8dp"/>
+        </LinearLayout>
+
+        <!-- ── GOALS ────────────────────────────────────────────────────── -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="GOALS"
+            android:textColor="#555555"
+            android:textSize="11sp"
+            android:letterSpacing="0.15"
+            android:layout_marginTop="28dp"
+            android:layout_marginBottom="8dp"/>
+
+        <LinearLayout
+            android:id="@+id/circlesContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"/>
+
+        <!-- ── GUARDED APPS ─────────────────────────────────────────────── -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="28dp"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="GUARDED APPS"
+                android:textColor="#555555"
+                android:textSize="11sp"
+                android:letterSpacing="0.15"/>
+
+            <Button
+                android:id="@+id/btnAddGuardedApp"
+                style="@style/Widget.AppCompat.Button.Borderless"
+                android:layout_width="wrap_content"
+                android:layout_height="32dp"
+                android:text="+ Add"
+                android:textColor="#c8f542"
+                android:textSize="12sp"
+                android:paddingHorizontal="4dp"/>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvNoGuardedApps"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="No apps guarded yet"
+            android:textColor="#444444"
+            android:textSize="13sp"
+            android:layout_marginBottom="8dp"
+            android:visibility="gone"/>
+
+        <LinearLayout
+            android:id="@+id/guardedAppsContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginBottom="48dp"/>
+
+    </LinearLayout>
+</ScrollView>

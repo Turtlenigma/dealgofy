@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:cardBackgroundColor="#1c1c1c"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="0dp"
+    android:layout_marginBottom="10dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/tvCircleLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="CIRCLE 1"
+            android:textColor="#555555"
+            android:textSize="11sp"
+            android:letterSpacing="0.1"
+            android:layout_marginBottom="10dp"/>
+
+        <!-- Name input -->
+        <EditText
+            android:id="@+id/etCircleName"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:background="#111111"
+            android:textColor="#e8e8e8"
+            android:textSize="14sp"
+            android:hint="Goal name"
+            android:textColorHint="#444444"
+            android:paddingHorizontal="12dp"
+            android:inputType="text"
+            android:imeOptions="actionDone"
+            android:maxLines="1"
+            android:layout_marginBottom="12dp"/>
+
+        <!-- Action type selector -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="36dp"
+            android:orientation="horizontal"
+            android:background="#111111"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:id="@+id/tvTypeApp"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="Open App"
+                android:textSize="12sp"
+                android:textColor="#666666"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground"/>
+
+            <View
+                android:layout_width="1dp"
+                android:layout_height="match_parent"
+                android:background="#222222"/>
+
+            <TextView
+                android:id="@+id/tvTypeFocus"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="Focus"
+                android:textSize="12sp"
+                android:textColor="#666666"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground"/>
+
+            <View
+                android:layout_width="1dp"
+                android:layout_height="match_parent"
+                android:background="#222222"/>
+
+            <TextView
+                android:id="@+id/tvTypeLock"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="Lock"
+                android:textSize="12sp"
+                android:textColor="#666666"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground"/>
+        </LinearLayout>
+
+        <!-- Linked app row (shown only for Open App type) -->
+        <LinearLayout
+            android:id="@+id/rowLinkedApp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/tvLinkedAppName"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Tap to pick an app"
+                android:textColor="#666666"
+                android:textSize="13sp"
+                android:ellipsize="end"
+                android:maxLines="1"/>
+
+            <Button
+                android:id="@+id/btnPickApp"
+                style="@style/Widget.AppCompat.Button.Borderless"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:text="Pick"
+                android:textColor="#c8f542"
+                android:textSize="12sp"
+                android:paddingHorizontal="8dp"/>
+        </LinearLayout>
+
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="52dp"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:background="#1c1c1c"
+    android:paddingStart="14dp"
+    android:paddingEnd="4dp"
+    android:layout_marginBottom="4dp">
+
+    <ImageView
+        android:id="@+id/ivGuardedAppIcon"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:layout_marginEnd="12dp"
+        android:scaleType="fitCenter"/>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvGuardedAppName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#e8e8e8"
+            android:textSize="14sp"
+            android:ellipsize="end"
+            android:maxLines="1"/>
+
+        <TextView
+            android:id="@+id/tvGuardedPackage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#444444"
+            android:textSize="11sp"
+            android:ellipsize="end"
+            android:maxLines="1"/>
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btnRemoveGuardedApp"
+        style="@style/Widget.AppCompat.Button.Borderless"
+        android:layout_width="wrap_content"
+        android:layout_height="36dp"
+        android:text="✕"
+        android:textColor="#666666"
+        android:textSize="14sp"
+        android:paddingHorizontal="12dp"/>
+
+</LinearLayout>
