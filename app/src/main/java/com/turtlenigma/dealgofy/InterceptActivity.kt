@@ -60,7 +60,7 @@ class InterceptActivity : AppCompatActivity() {
     /** "I want to use [AppName] right now" — the user chose to enter the guarded app. */
     fun enterApp() {
         recordExit(ExitType.ENTER_APP)
-        DeAlgofyAccessibilityService.instance?.onInterceptDismissed()
+        DeAlgofyAccessibilityService.instance?.approveSession(targetPackage)
         launchPackage(targetPackage)
         finish()
     }
