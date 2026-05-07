@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
+import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -53,6 +54,7 @@ class DeAlgofyAccessibilityService : AccessibilityService() {
         var instance: DeAlgofyAccessibilityService? = null
 
         const val PREFS_NAME = "dealgofy_prefs"
+        private const val TAG = "DeAlgofy.A11y"
         const val PREFS_KEY_GUARDED_APPS = "guarded_apps"
 
         // SharedPreferences keys for per-circle configuration
@@ -75,7 +77,14 @@ class DeAlgofyAccessibilityService : AccessibilityService() {
         val pkg = event.packageName?.toString() ?: return
 
         // Ignore our own windows (MainActivity, InterceptActivity, etc.)
-        if (pkg == packageName) return
+        if (pkg == packageName) {
+            Log.d(TAG, "event: OWN pkg=$pkg — ignored (isInterceptShowing=$isInterceptShowing)")
+            return
+        }
+
+        Log.d(TAG, "event: pkg=$pkg  class=${event.className}  " +
+            "currentFg=$currentForegroundPkg  isInterceptShowing=$isInterceptShowing  " +
+            "approvedSessions=$approvedSessions")
 
         // Track foreground transitions to manage approved-session lifetimes.
         if (pkg != currentForegroundPkg) {
@@ -84,32 +93,42 @@ class DeAlgofyAccessibilityService : AccessibilityService() {
 
             // User left an approved app — start the 30-second session-end timer.
             if (prev != null && prev in approvedSessions) {
+                Log.d(TAG, "left approved app $prev — starting 30s expiry timer")
                 clearSessionJobs[prev]?.cancel()
                 clearSessionJobs[prev] = sessionScope.launch {
                     delay(30_000L)
                     approvedSessions.remove(prev)
                     clearSessionJobs.remove(prev)
+                    Log.d(TAG, "session expired for $prev")
                 }
             }
 
             // User returned to an approved app before the timer fired — keep the session.
             if (pkg in approvedSessions) {
+                Log.d(TAG, "returned to approved app $pkg — cancelling expiry timer")
                 clearSessionJobs[pkg]?.cancel()
                 clearSessionJobs.remove(pkg)
             }
         }
 
         // Don't stack intercepts.
-        if (isInterceptShowing) return
+        if (isInterceptShowing) {
+            Log.d(TAG, "intercept already showing — suppressing for pkg=$pkg")
+            return
+        }
 
         // Skip apps the user has already approved for this session.
-        if (pkg in approvedSessions) return
+        if (pkg in approvedSessions) {
+            Log.d(TAG, "pkg=$pkg is session-approved — skipping intercept")
+            return
+        }
 
         val guardedApps = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .getStringSet(PREFS_KEY_GUARDED_APPS, emptySet()) ?: emptySet()
 
         if (pkg !in guardedApps) return
 
+        Log.d(TAG, "TRIGGERING intercept for guarded pkg=$pkg")
         isInterceptShowing = true
         showIntercept(pkg)
     }
@@ -127,6 +146,7 @@ class DeAlgofyAccessibilityService : AccessibilityService() {
 
     /** Called by InterceptActivity when it is fully dismissed without session approval. */
     fun onInterceptDismissed() {
+        Log.d(TAG, "onInterceptDismissed: isInterceptShowing -> false")
         isInterceptShowing = false
     }
 
@@ -136,6 +156,7 @@ class DeAlgofyAccessibilityService : AccessibilityService() {
      * The approval is cleared automatically 30 seconds after the user leaves the app.
      */
     fun approveSession(pkg: String) {
+        Log.d(TAG, "approveSession: adding $pkg to approvedSessions, isInterceptShowing -> false")
         approvedSessions.add(pkg)
         clearSessionJobs[pkg]?.cancel()
         clearSessionJobs.remove(pkg)

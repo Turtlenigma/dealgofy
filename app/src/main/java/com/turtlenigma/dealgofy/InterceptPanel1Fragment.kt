@@ -2,6 +2,7 @@ package com.turtlenigma.dealgofy
 
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
+import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.os.Bundle
 import android.os.Handler
@@ -19,6 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
+import java.util.Calendar
 
 class InterceptPanel1Fragment : Fragment() {
 
@@ -74,19 +76,20 @@ class InterceptPanel1Fragment : Fragment() {
         // ── Circle tap dispatch ───────────────────────────────────────────────
         circleViews.forEachIndexed { i, (circleId, _, countId) ->
             view.findViewById<LinearLayout>(circleId).setOnClickListener {
-                // Optimistic display increment
                 val tv = view.findViewById<TextView>(countId)
                 tv.text = ((tv.text.toString().toIntOrNull() ?: 0) + 1).toString()
                 host.onCircleTapped(i, CircleConfig.load(prefs, i))
             }
         }
 
+        // ── Usage stats ───────────────────────────────────────────────────────
+        loadUsageStats(view, host.targetPackage, host.getAppName())
+
         // ── Seen-count → animation speed ──────────────────────────────────────
         val seenCount = prefs.getInt(DeAlgofyAccessibilityService.PREFS_KEY_SEEN_COUNT, 0)
         prefs.edit()
             .putInt(DeAlgofyAccessibilityService.PREFS_KEY_SEEN_COUNT, seenCount + 1)
             .apply()
-        // First 10 intercepts: 2 s pause between lines. After that: 0.5 s.
         val pauseMs = if (seenCount >= 10) 500L else 2000L
 
         startRevealSequence(view, circleViews, pauseMs)
@@ -97,6 +100,60 @@ class InterceptPanel1Fragment : Fragment() {
         super.onDestroyView()
     }
 
+    // ── Stats ─────────────────────────────────────────────────────────────────
+
+    private fun loadUsageStats(view: View, pkg: String, appName: String) {
+        val tvOpened = view.findViewById<TextView>(R.id.tvOpenedToday)
+        val tvTime   = view.findViewById<TextView>(R.id.tvTimeToday)
+
+        lifecycleScope.launch {
+            val dayStartMs = dayStartMillis()
+
+            // Open count from Room
+            val openCount = withContext(Dispatchers.IO) {
+                AppDatabase.get(requireContext())
+                    .interceptEventDao()
+                    .enterAppCountToday(pkg, dayStartMs)
+            }
+
+            // Screen time from UsageStatsManager
+            val timeStr = withContext(Dispatchers.IO) {
+                usageTimeString(pkg, dayStartMs)
+            }
+
+            tvOpened.text = "$appName opened today: $openCount"
+            tvTime.text   = "Time spent on $appName today: $timeStr"
+        }
+    }
+
+    private fun dayStartMillis(): Long {
+        return Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+    }
+
+    private fun usageTimeString(pkg: String, dayStartMs: Long): String {
+        val usm = requireContext()
+            .getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+        val stats = usm.queryUsageStats(
+            UsageStatsManager.INTERVAL_DAILY,
+            dayStartMs,
+            System.currentTimeMillis()
+        )
+        val totalMs = stats?.find { it.packageName == pkg }?.totalTimeInForeground ?: 0L
+        val totalMinutes = (totalMs / 60_000).toInt()
+        val hours = totalMinutes / 60
+        val mins  = totalMinutes % 60
+        return when {
+            hours > 0 -> "${hours}h ${mins}m"
+            totalMinutes > 0 -> "${mins}m"
+            else -> "0m"
+        }
+    }
+
     // ── Animation ─────────────────────────────────────────────────────────────
 
     private fun startRevealSequence(
@@ -104,48 +161,67 @@ class InterceptPanel1Fragment : Fragment() {
         circleViews: List<Triple<Int, Int, Int>>,
         pauseMs: Long
     ) {
-        val tvWait  = view.findViewById<TextView>(R.id.tvWait)
-        val tvGoals = view.findViewById<TextView>(R.id.tvGoals)
-        val circles = circleViews.map { (id, _, _) ->
+        val tvWait     = view.findViewById<TextView>(R.id.tvWait)
+        val tvGoals    = view.findViewById<TextView>(R.id.tvGoals)
+        val tvOpened   = view.findViewById<TextView>(R.id.tvOpenedToday)
+        val tvTime     = view.findViewById<TextView>(R.id.tvTimeToday)
+        val btnGoHome  = view.findViewById<Button>(R.id.btnGoHome)
+        val tvEnterApp = view.findViewById<TextView>(R.id.tvEnterApp)
+        val circles    = circleViews.map { (id, _, _) ->
             view.findViewById<LinearLayout>(id)
         }
 
-        // Set initial hidden state for all animated elements
-        tvWait.alpha  = 0f
-        tvGoals.alpha = 0f
+        listOf(tvWait, tvGoals, tvOpened, tvTime, btnGoHome, tvEnterApp)
+            .forEach { it.alpha = 0f }
         circles.forEach { c -> c.alpha = 0f; c.scaleX = 0.6f; c.scaleY = 0.6f }
 
-        // 1 — "hey, wait a second!" fades in over 800 ms
-        ObjectAnimator.ofFloat(tvWait, "alpha", 0f, 1f).apply {
-            duration = 800
-            start()
-        }
+        // Tunables
+        val initialDelay  = 400L
+        val waitFadeMs    = 800L
+        val fadeMs        = 600L
+        val circleStagger = 220L
+        val circlePopMs   = 400L
+        val tailPause     = 700L  // pause between circles → stats → button → enter
 
-        // 2 — pause, then "have you worked…" fades in over 600 ms
-        handler.postDelayed({
-            if (!isAdded) return@postDelayed
-            ObjectAnimator.ofFloat(tvGoals, "alpha", 0f, 1f).apply {
-                duration = 600
+        fun fadeIn(v: View, durationMs: Long = fadeMs) {
+            ObjectAnimator.ofFloat(v, "alpha", 0f, 1f).apply {
+                duration = durationMs
                 start()
             }
+        }
 
-            // 3 — circles pop in with 150 ms stagger once goals text is mostly visible
-            handler.postDelayed({
-                if (!isAdded) return@postDelayed
-                circles.forEachIndexed { i, circle ->
-                    handler.postDelayed({
-                        if (!isAdded) return@postDelayed
-                        popCircleIn(circle)
-                    }, i * 150L)
-                }
-            }, 500L)
-        }, 800L + pauseMs)
+        fun later(delay: Long, block: () -> Unit) {
+            handler.postDelayed({ if (isAdded) block() }, delay)
+        }
+
+        var t = initialDelay
+
+        // 1 — "hey, wait a second!"
+        later(t) { fadeIn(tvWait, waitFadeMs) }
+        t += waitFadeMs + pauseMs
+
+        // 2 — "have you worked towards your goals today?"
+        later(t) { fadeIn(tvGoals) }
+        t += fadeMs + pauseMs
+
+        // 3 — circles plop in one by one
+        circles.forEachIndexed { i, circle ->
+            later(t + i * circleStagger) { popCircleIn(circle) }
+        }
+        t += (circles.size - 1) * circleStagger + circlePopMs + tailPause
+
+        // 4 — stats lines + "Go back to home screen" all pop up together
+        later(t) {
+            fadeIn(tvOpened)
+            fadeIn(tvTime)
+            fadeIn(btnGoHome)
+        }
+        t += fadeMs + tailPause
+
+        // 5 — "I want to use [App] right now"
+        later(t) { fadeIn(tvEnterApp) }
     }
 
-    /**
-     * Scale the circle from 0.6 → 1.0 with an overshoot bounce while fading
-     * it in from invisible.
-     */
     private fun popCircleIn(circle: View) {
         AnimatorSet().apply {
             playTogether(

@@ -2,6 +2,7 @@ package com.turtlenigma.dealgofy
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.LinearLayout
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
@@ -16,17 +17,27 @@ class InterceptActivity : AppCompatActivity() {
 
     companion object {
         const val EXTRA_PACKAGE_NAME = "package_name"
+        private const val TAG = "DeAlgofy.Intercept"
     }
 
     private lateinit var viewPager: ViewPager2
     var targetPackage: String = ""
         private set
 
+    /**
+     * Set to true whenever an exit path explicitly handles the intercept state
+     * (approveSession or onInterceptDismissed). Prevents onDestroy from
+     * resetting isInterceptShowing after a *new* intercept has already been
+     * launched for a different package.
+     */
+    private var interceptHandled = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_intercept)
 
         targetPackage = intent.getStringExtra(EXTRA_PACKAGE_NAME) ?: ""
+        Log.d(TAG, "onCreate: showing intercept for pkg=$targetPackage")
 
         viewPager = findViewById(R.id.viewPager)
         viewPager.adapter = InterceptPagerAdapter(this, targetPackage)
@@ -43,7 +54,14 @@ class InterceptActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        DeAlgofyAccessibilityService.instance?.onInterceptDismissed()
+        if (!interceptHandled) {
+            // Back-press or system kill without an explicit exit path — clear the
+            // intercept flag so future events are not permanently suppressed.
+            Log.d(TAG, "onDestroy: intercept NOT handled — calling onInterceptDismissed for pkg=$targetPackage")
+            DeAlgofyAccessibilityService.instance?.onInterceptDismissed()
+        } else {
+            Log.d(TAG, "onDestroy: intercept already handled — skipping onInterceptDismissed for pkg=$targetPackage")
+        }
         super.onDestroy()
     }
 
@@ -59,6 +77,8 @@ class InterceptActivity : AppCompatActivity() {
 
     /** "I want to use [AppName] right now" — the user chose to enter the guarded app. */
     fun enterApp() {
+        Log.d(TAG, "enterApp: approving session for pkg=$targetPackage")
+        interceptHandled = true
         recordExit(ExitType.ENTER_APP)
         DeAlgofyAccessibilityService.instance?.approveSession(targetPackage)
         launchPackage(targetPackage)
@@ -88,6 +108,7 @@ class InterceptActivity : AppCompatActivity() {
 
             when (config.actionType) {
                 CircleActionType.PRODUCTIVE_APP -> {
+                    interceptHandled = true
                     DeAlgofyAccessibilityService.instance?.onInterceptDismissed()
                     config.linkedApp?.let { launchPackage(it) }
                     finish()
@@ -97,6 +118,7 @@ class InterceptActivity : AppCompatActivity() {
                         .show(supportFragmentManager, "focus_sheet")
                 }
                 CircleActionType.LOCK_SCREEN -> {
+                    interceptHandled = true
                     DeAlgofyAccessibilityService.instance?.onInterceptDismissed()
                     DeAlgofyAccessibilityService.instance?.lockScreen()
                     finish()
@@ -139,6 +161,7 @@ class InterceptActivity : AppCompatActivity() {
     }
 
     private fun dismissAndNavigateHome() {
+        interceptHandled = true
         DeAlgofyAccessibilityService.instance?.onInterceptDismissed()
         startActivity(Intent(Intent.ACTION_MAIN).apply {
             addCategory(Intent.CATEGORY_HOME)

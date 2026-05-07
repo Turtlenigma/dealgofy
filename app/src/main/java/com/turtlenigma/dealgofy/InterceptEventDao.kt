@@ -15,4 +15,13 @@ interface InterceptEventDao {
 
     @Query("SELECT COUNT(*) FROM intercept_events")
     suspend fun totalCount(): Int
+
+    /** How many times the user consciously opened [pkg] today (since [dayStartMs]). */
+    @Query("""
+        SELECT COUNT(*) FROM intercept_events
+        WHERE triggered_package = :pkg
+          AND exit_type = 'ENTER_APP'
+          AND timestamp >= :dayStartMs
+    """)
+    suspend fun enterAppCountToday(pkg: String, dayStartMs: Long): Int
 }
