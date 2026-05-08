@@ -9,7 +9,9 @@
       "Bash(\"C:/Users/irvin/AppData/Local/Android/Sdk/platform-tools/adb.exe\" -s R5CY82G8PNM uninstall com.turtlenigma.dealgofy)",
       "Bash(\"C:/Users/irvin/AppData/Local/Android/Sdk/platform-tools/adb.exe\" -s R5CY82G8PNM install \"C:/Users/irvin/AndroidStudioProjects/DeAlgofy/app/build/outputs/apk/debug/app-debug.apk\")",
       "Bash(echo \"EXIT:$?\")",
-      "Bash(git check-ignore *)"
+      "Bash(git check-ignore *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }

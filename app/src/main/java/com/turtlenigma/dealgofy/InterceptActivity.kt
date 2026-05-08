@@ -88,18 +88,19 @@ class InterceptActivity : AppCompatActivity() {
     /**
      * A circle was tapped. Writes the tap count increment + exit event to Room
      * (sequentially, on IO), then dispatches the configured action.
-     * Focus mode is the exception: the exit event is recorded later by
-     * onFocusModeConfirmed(), when the user actually confirms the duration.
+     * Focus mode is the exception: neither the tap count nor the exit event
+     * is recorded until the user confirms a duration in FocusBottomSheet —
+     * a tap that the user backs out of should not "count" as a focus session.
      */
     fun onCircleTapped(circleIndex: Int, config: CircleConfig) {
         val exitType = circleExitType(circleIndex)
         val today = LocalDate.now().toString()
 
         lifecycleScope.launch {
-            withContext(Dispatchers.IO) {
-                val db = AppDatabase.get(applicationContext)
-                db.circleTapCountDao().incrementTap(today, circleIndex)
-                if (config.actionType != CircleActionType.FOCUS_MODE) {
+            if (config.actionType != CircleActionType.FOCUS_MODE) {
+                withContext(Dispatchers.IO) {
+                    val db = AppDatabase.get(applicationContext)
+                    db.circleTapCountDao().incrementTap(today, circleIndex)
                     db.interceptEventDao().insert(
                         InterceptEvent(triggeredPackage = targetPackage, exitType = exitType)
                     )

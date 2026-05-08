@@ -24,4 +24,17 @@ interface InterceptEventDao {
           AND timestamp >= :dayStartMs
     """)
     suspend fun enterAppCountToday(pkg: String, dayStartMs: Long): Int
+
+    /**
+     * Total minutes of committed focus sessions for a given circle today.
+     * Only rows with a non-null focus_duration contribute — i.e. sessions
+     * the user actually confirmed via FocusBottomSheet.
+     */
+    @Query("""
+        SELECT IFNULL(SUM(focus_duration), 0) FROM intercept_events
+        WHERE exit_type = :exitTypeName
+          AND focus_duration IS NOT NULL
+          AND timestamp >= :dayStartMs
+    """)
+    suspend fun focusMinutesToday(exitTypeName: String, dayStartMs: Long): Int
 }

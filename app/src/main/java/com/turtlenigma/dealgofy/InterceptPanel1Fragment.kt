@@ -4,9 +4,13 @@ import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.app.usage.UsageStatsManager
 import android.content.Context
+import android.graphics.Typeface
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.style.StyleSpan
 import android.view.Choreographer
 import android.view.LayoutInflater
 import android.view.View
@@ -97,23 +101,37 @@ class InterceptPanel1Fragment : Fragment() {
             view.findViewById<TextView>(nameId).text = CircleConfig.load(prefs, i).name
         }
 
-        // ── Today's tap counts (Room) ─────────────────────────────────────────
+        // ── Today's per-circle counter (taps for non-focus, minutes for focus) ─
         lifecycleScope.launch {
             val db = AppDatabase.get(requireContext())
+            val dayStartMs = dayStartMillis()
             circleViews.forEachIndexed { i, (_, _, countId) ->
-                val count = withContext(Dispatchers.IO) {
-                    db.circleTapCountDao().getCount(today, i) ?: 0
+                val config = CircleConfig.load(prefs, i)
+                val display = withContext(Dispatchers.IO) {
+                    if (config.actionType == CircleActionType.FOCUS_MODE) {
+                        val mins = db.interceptEventDao()
+                            .focusMinutesToday(circleExitTypeName(i), dayStartMs)
+                        "${mins}m"
+                    } else {
+                        (db.circleTapCountDao().getCount(today, i) ?: 0).toString()
+                    }
                 }
-                view.findViewById<TextView>(countId).text = count.toString()
+                view.findViewById<TextView>(countId).text = display
             }
         }
 
         // ── Circle tap dispatch ───────────────────────────────────────────────
         circleViews.forEachIndexed { i, (circleId, _, countId) ->
             view.findViewById<LinearLayout>(circleId).setOnClickListener {
-                val tv = view.findViewById<TextView>(countId)
-                tv.text = ((tv.text.toString().toIntOrNull() ?: 0) + 1).toString()
-                host.onCircleTapped(i, CircleConfig.load(prefs, i))
+                val config = CircleConfig.load(prefs, i)
+                // Optimistic display increment for tap-counted circles only.
+                // Focus-mode circles display total minutes; that number must
+                // not change until the user actually confirms a session.
+                if (config.actionType != CircleActionType.FOCUS_MODE) {
+                    val tv = view.findViewById<TextView>(countId)
+                    tv.text = ((tv.text.toString().toIntOrNull() ?: 0) + 1).toString()
+                }
+                host.onCircleTapped(i, config)
             }
         }
 
@@ -165,9 +183,28 @@ class InterceptPanel1Fragment : Fragment() {
                 usageTimeString(pkg, dayStartMs)
             }
 
-            tvOpened.text = "$appName opened today: $openCount"
-            tvTime.text   = "Time spent on $appName today: $timeStr"
+            tvOpened.text = boldTail("$appName opened today: ", openCount.toString())
+            tvTime.text   = boldTail("Time spent on $appName today: ", timeStr)
         }
+    }
+
+    /** Build "<prefix><tail>" with [tail] rendered bold. */
+    private fun boldTail(prefix: String, tail: String): SpannableString {
+        val full = prefix + tail
+        return SpannableString(full).apply {
+            setSpan(
+                StyleSpan(Typeface.BOLD),
+                prefix.length,
+                full.length,
+                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+        }
+    }
+
+    private fun circleExitTypeName(index: Int): String = when (index) {
+        0 -> ExitType.CIRCLE_1.name
+        1 -> ExitType.CIRCLE_2.name
+        else -> ExitType.CIRCLE_3.name
     }
 
     private fun dayStartMillis(): Long {
