@@ -7,13 +7,16 @@ import android.content.Context
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.Choreographer
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.OvershootInterpolator
 import android.widget.Button
+import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
@@ -21,6 +24,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import java.util.Calendar
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.sqrt
+import kotlin.random.Random
 
 class InterceptPanel1Fragment : Fragment() {
 
@@ -33,6 +40,34 @@ class InterceptPanel1Fragment : Fragment() {
     }
 
     private val handler = Handler(Looper.getMainLooper())
+
+    // ── Floating-circle physics ──────────────────────────────────────────────
+    private data class Body(
+        val view: View,
+        var x: Float,
+        var y: Float,
+        var vx: Float,
+        var vy: Float
+    )
+
+    private val bodies = mutableListOf<Body>()
+    private val choreographer = Choreographer.getInstance()
+    private var lastFrameNs = 0L
+    private var floatRunning = false
+    private var playArea: FrameLayout? = null
+
+    private val floatTick = object : Choreographer.FrameCallback {
+        override fun doFrame(frameTimeNanos: Long) {
+            if (!floatRunning || !isAdded) return
+            if (lastFrameNs != 0L) {
+                val dt = ((frameTimeNanos - lastFrameNs) / 1_000_000_000f)
+                    .coerceAtMost(1f / 30f)
+                stepFloat(dt)
+            }
+            lastFrameNs = frameTimeNanos
+            choreographer.postFrameCallback(this)
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -85,6 +120,12 @@ class InterceptPanel1Fragment : Fragment() {
         // ── Usage stats ───────────────────────────────────────────────────────
         loadUsageStats(view, host.targetPackage, host.getAppName())
 
+        // ── Float physics setup (positions become valid after layout) ─────────
+        val container = view.findViewById<FrameLayout>(R.id.circlesContainer)
+        playArea = container
+        val circles = circleViews.map { (id, _, _) -> view.findViewById<View>(id) }
+        container.doOnLayout { setupFloatBodies(circles) }
+
         // ── Seen-count → animation speed ──────────────────────────────────────
         val seenCount = prefs.getInt(DeAlgofyAccessibilityService.PREFS_KEY_SEEN_COUNT, 0)
         prefs.edit()
@@ -96,7 +137,10 @@ class InterceptPanel1Fragment : Fragment() {
     }
 
     override fun onDestroyView() {
+        stopFloating()
         handler.removeCallbacksAndMessages(null)
+        playArea = null
+        bodies.clear()
         super.onDestroyView()
     }
 
@@ -204,11 +248,13 @@ class InterceptPanel1Fragment : Fragment() {
         later(t) { fadeIn(tvGoals) }
         t += fadeMs + pauseMs
 
-        // 3 — circles plop in one by one
+        // 3 — circles plop in one by one, then start floating
         circles.forEachIndexed { i, circle ->
             later(t + i * circleStagger) { popCircleIn(circle) }
         }
-        t += (circles.size - 1) * circleStagger + circlePopMs + tailPause
+        val circlesCompleteAt = t + (circles.size - 1) * circleStagger + circlePopMs
+        later(circlesCompleteAt) { startFloating() }
+        t = circlesCompleteAt + tailPause
 
         // 4 — stats lines + "Go back to home screen" all pop up together
         later(t) {
@@ -232,6 +278,148 @@ class InterceptPanel1Fragment : Fragment() {
             duration     = 400
             interpolator = OvershootInterpolator(1.5f)
             start()
+        }
+    }
+
+    // ── Floating physics ─────────────────────────────────────────────────────
+
+    /**
+     * Place each circle in the same compact triangle as before (top-center,
+     * bottom-left, bottom-right) sitting in the middle of the play area, and
+     * seed each with a small random velocity so they begin to drift outward.
+     * Called once after the play area has been measured.
+     */
+    private fun setupFloatBodies(circles: List<View>) {
+        val container = playArea ?: return
+        val w = container.width.toFloat()
+        val h = container.height.toFloat()
+        if (w <= 0f || h <= 0f) return
+        val s = circles[0].width.toFloat().takeIf { it > 0f } ?: return
+        val density = resources.displayMetrics.density
+
+        // Compact triangle, centered in the play area. Matches the previous
+        // static layout: 12 dp vertical gap, 20 dp gap between bottom circles.
+        val vGap = 12f * density
+        val hGap = 20f * density
+        val triH = 2f * s + vGap
+        val triW = 2f * s + hGap
+        val cx = w / 2f
+        val cy = h / 2f
+        val topX = cx - s / 2f
+        val topY = cy - triH / 2f
+        val botY = topY + s + vGap
+        val botLX = cx - triW / 2f
+        val botRX = botLX + s + hGap
+        val starts = listOf(topX to topY, botLX to botY, botRX to botY)
+
+        bodies.clear()
+        starts.forEachIndexed { i, (px, py) ->
+            // 12–20 dp/s — a slow, drifty pace that reads as "floating on water".
+            val speed = (12f + Random.nextFloat() * 8f) * density
+            val angle = Random.nextFloat() * 2f * Math.PI.toFloat()
+            bodies.add(
+                Body(
+                    view = circles[i],
+                    x = px,
+                    y = py,
+                    vx = speed * cos(angle),
+                    vy = speed * sin(angle)
+                )
+            )
+        }
+        bodies.forEach { b ->
+            b.view.translationX = b.x
+            b.view.translationY = b.y
+        }
+    }
+
+    private fun startFloating() {
+        if (floatRunning || bodies.isEmpty()) return
+        floatRunning = true
+        lastFrameNs = 0L
+        choreographer.postFrameCallback(floatTick)
+    }
+
+    private fun stopFloating() {
+        floatRunning = false
+        choreographer.removeFrameCallback(floatTick)
+    }
+
+    private fun stepFloat(dt: Float) {
+        val container = playArea ?: return
+        val w = container.width.toFloat()
+        val h = container.height.toFloat()
+        if (w <= 0f || h <= 0f) return
+
+        // Tiny random angle nudge per body so paths curve gently instead of
+        // tracing perfectly straight lines until they hit a wall.
+        val driftRadPerSec = 0.6f  // ~34°/s of slow wandering
+
+        // 1. Integrate position with a small random angle drift.
+        bodies.forEach { b ->
+            val da = (Random.nextFloat() * 2f - 1f) * driftRadPerSec * dt
+            val cosA = cos(da)
+            val sinA = sin(da)
+            val nvx = b.vx * cosA - b.vy * sinA
+            val nvy = b.vx * sinA + b.vy * cosA
+            b.vx = nvx
+            b.vy = nvy
+
+            b.x += b.vx * dt
+            b.y += b.vy * dt
+        }
+
+        // 2. Circle-circle collisions (equal-mass elastic, treating each
+        //    100 dp square as a circle of radius s/2 around its center).
+        for (i in 0 until bodies.size) {
+            for (j in i + 1 until bodies.size) {
+                val a = bodies[i]
+                val b = bodies[j]
+                val r = a.view.width.toFloat() / 2f
+                val acx = a.x + r
+                val acy = a.y + r
+                val bcx = b.x + r
+                val bcy = b.y + r
+                val dx = bcx - acx
+                val dy = bcy - acy
+                val minDist = 2f * r
+                val distSq = dx * dx + dy * dy
+                if (distSq < minDist * minDist && distSq > 0.0001f) {
+                    val dist = sqrt(distSq)
+                    val nx = dx / dist
+                    val ny = dy / dist
+
+                    // Push them apart so they don't sit overlapped.
+                    val overlap = (minDist - dist) / 2f
+                    a.x -= nx * overlap
+                    a.y -= ny * overlap
+                    b.x += nx * overlap
+                    b.y += ny * overlap
+
+                    // Swap the normal-component of velocity (equal masses).
+                    val vrx = b.vx - a.vx
+                    val vry = b.vy - a.vy
+                    val vn = vrx * nx + vry * ny
+                    if (vn < 0f) {
+                        a.vx += vn * nx
+                        a.vy += vn * ny
+                        b.vx -= vn * nx
+                        b.vy -= vn * ny
+                    }
+                }
+            }
+        }
+
+        // 3. Wall collisions + commit translation.
+        bodies.forEach { b ->
+            val s = b.view.width.toFloat()
+            if (b.x < 0f) { b.x = 0f; b.vx = -b.vx }
+            if (b.y < 0f) { b.y = 0f; b.vy = -b.vy }
+            if (b.x + s > w) { b.x = w - s; b.vx = -b.vx }
+            if (b.y + s > h) { b.y = h - s; b.vy = -b.vy }
+
+            b.view.translationX = b.x
+            b.view.translationY = b.y
         }
     }
 }

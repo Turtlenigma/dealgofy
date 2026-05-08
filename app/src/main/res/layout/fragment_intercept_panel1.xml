@@ -34,25 +34,22 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tvWait" />
 
-    <!-- Triangle circle arrangement: circle1 on top, circle2+circle3 below -->
-    <LinearLayout
+    <!-- Free-floating play area: circles drift inside this box and bounce off its walls -->
+    <FrameLayout
         android:id="@+id/circlesContainer"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:gravity="center_horizontal"
-        android:orientation="vertical"
+        android:layout_height="0dp"
+        android:layout_marginStart="-32dp"
+        android:layout_marginEnd="-32dp"
         app:layout_constraintBottom_toTopOf="@id/tvOpenedToday"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvGoals"
-        app:layout_constraintVertical_bias="0.5">
+        app:layout_constraintTop_toBottomOf="@id/tvGoals">
 
-        <!-- Top circle -->
         <LinearLayout
             android:id="@+id/circle1"
             android:layout_width="100dp"
             android:layout_height="100dp"
-            android:layout_marginBottom="12dp"
             android:background="@drawable/circle_bg"
             android:gravity="center"
             android:orientation="vertical"
@@ -62,92 +59,92 @@
                 android:id="@+id/tvCircle1Name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-black"
                 android:gravity="center"
                 android:maxLines="2"
                 android:text="Goal 1"
-                android:textColor="#999999"
-                android:textSize="11sp" />
+                android:textColor="#cccccc"
+                android:textSize="12sp"
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/tvCircle1Count"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
+                android:fontFamily="sans-serif-black"
                 android:text="0"
                 android:textColor="#c8f542"
                 android:textSize="24sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- Bottom two circles -->
         <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:id="@+id/circle2"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:background="@drawable/circle_bg"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="8dp">
 
-            <LinearLayout
-                android:id="@+id/circle2"
-                android:layout_width="100dp"
-                android:layout_height="100dp"
-                android:layout_marginHorizontal="10dp"
-                android:background="@drawable/circle_bg"
+            <TextView
+                android:id="@+id/tvCircle2Name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-black"
                 android:gravity="center"
-                android:orientation="vertical"
-                android:padding="8dp">
+                android:maxLines="2"
+                android:text="Goal 2"
+                android:textColor="#cccccc"
+                android:textSize="12sp"
+                android:textStyle="bold" />
 
-                <TextView
-                    android:id="@+id/tvCircle2Name"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:maxLines="2"
-                    android:text="Goal 2"
-                    android:textColor="#999999"
-                    android:textSize="11sp" />
-
-                <TextView
-                    android:id="@+id/tvCircle2Count"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="0"
-                    android:textColor="#c8f542"
-                    android:textSize="24sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/circle3"
-                android:layout_width="100dp"
-                android:layout_height="100dp"
-                android:layout_marginHorizontal="10dp"
-                android:background="@drawable/circle_bg"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:padding="8dp">
-
-                <TextView
-                    android:id="@+id/tvCircle3Name"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:maxLines="2"
-                    android:text="Goal 3"
-                    android:textColor="#999999"
-                    android:textSize="11sp" />
-
-                <TextView
-                    android:id="@+id/tvCircle3Count"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="0"
-                    android:textColor="#c8f542"
-                    android:textSize="24sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
+            <TextView
+                android:id="@+id/tvCircle2Count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:fontFamily="sans-serif-black"
+                android:text="0"
+                android:textColor="#c8f542"
+                android:textSize="24sp"
+                android:textStyle="bold" />
         </LinearLayout>
-    </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/circle3"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:background="@drawable/circle_bg"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="8dp">
+
+            <TextView
+                android:id="@+id/tvCircle3Name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-black"
+                android:gravity="center"
+                android:maxLines="2"
+                android:text="Goal 3"
+                android:textColor="#cccccc"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvCircle3Count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:fontFamily="sans-serif-black"
+                android:text="0"
+                android:textColor="#c8f542"
+                android:textSize="24sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </FrameLayout>
 
     <!-- Usage stats — staged into the reveal sequence -->
     <TextView
