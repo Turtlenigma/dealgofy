@@ -30,7 +30,7 @@ reveals itself slowly:
 1. *"hey, wait a second!"*
 2. *"have you worked towards your goals today?"*
 3. Three circles plop in. They drift gently around the screen, bouncing
-   off each other and the walls — slow, ambient, like flotsam on water.
+   off each other and the walls — slow, ambient, like floating on water.
    Each circle is a configurable action: a productive app, a focus
    session, or screen lock.
 4. Today's stats appear: *"Instagram opened today: 7"*, *"Time spent on
